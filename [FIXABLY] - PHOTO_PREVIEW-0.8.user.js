@@ -21,6 +21,7 @@
 (function () {
     'use strict';
 
+    const userScript = `
     function parseFilename(url) {
         try {
             const urlObj = new URL(url);
@@ -101,13 +102,12 @@
         const ext = filename.slice(dotIndex + 1).toLowerCase();
 
         if (iframeExtensions.includes(ext) || imgExtensions.includes(ext)) {
-            console.log(`${filename} TO JEST ${ext.toUpperCase()}`);
+            console.log(\`\${filename} TO JEST \${ext.toUpperCase()}\`);
 
             filenameLabel.textContent = filename;
             previewContent.innerHTML = '';
 
             if (iframeExtensions.includes(ext)) {
-                // iframe preview dla png, heic, pdf
                 previewDiv.style.width = '50vw';
                 previewDiv.style.height = '70vh';
                 previewDiv.style.top = '20px';
@@ -122,7 +122,6 @@
                 previewContent.appendChild(iframe);
 
             } else if (imgExtensions.includes(ext)) {
-                // img preview dla jpg/jpeg
                 const img = document.createElement('img');
                 img.src = target.href;
                 img.style.display = 'block';
@@ -149,8 +148,8 @@
                     displayWidth = Math.max(displayWidth, minWidth);
                     displayHeight = Math.max(displayHeight, minHeight);
 
-                    previewDiv.style.width = `${displayWidth}px`;
-                    previewDiv.style.height = `${displayHeight + 40}px`;
+                    previewDiv.style.width = \`\${displayWidth}px\`;
+                    previewDiv.style.height = \`\${displayHeight + 40}px\`;
                     previewDiv.style.top = '20px';
                     previewDiv.style.left = '20px';
                 };
@@ -177,5 +176,10 @@
             }
         }
     });
+    `;
 
+    const scriptTag = document.createElement('script');
+    scriptTag.type = 'text/javascript';
+    scriptTag.textContent = userScript;
+    document.head.appendChild(scriptTag);
 })();
