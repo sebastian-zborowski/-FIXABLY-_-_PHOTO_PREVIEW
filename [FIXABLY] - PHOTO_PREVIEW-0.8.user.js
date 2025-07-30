@@ -18,19 +18,6 @@
 
 //Ostatnia aktualizacja 31.07.2025
 
-// ==UserScript==
-// @name         [FIXABLY] - PHOTO_PREVIEW
-// @version      1.5
-// @description  Podgląd załączonych do Fixably plików, po najechaniu na nie (iframe dla PNG, HEIC, PDF; img dla JPG/JPEG)
-// @author       Sebastian Zborowski
-// @match        https://ispot.fixably.com/pl/*
-// @updateURL    https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
-// @downloadURL  https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
-// @require      https://code.jquery.com/jquery-3.6.0.min.js
-// @grant        none
-// @source       https://github.com/sebastian-zborowski
-// ==/UserScript==
-
 (function () {
     'use strict';
 
