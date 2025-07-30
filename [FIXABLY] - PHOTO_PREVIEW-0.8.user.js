@@ -20,137 +20,157 @@
 (function () {
     'use strict';
 
-    const styleId = 'preview-style';
-    let observer = null;
-    let previewTimeout;
-
-    const createPreviewElements = () => {
-        if (!document.getElementById(styleId)) {
-            const previewStyles = `
-                <style id="${styleId}">
-                  #preview-popup {
-                    position: fixed;
-                    top: 20px;
-                    left: 20px;
-                    max-width: 35%;
-                    height: auto;
-                    border-radius: 5%;
-                    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-                    z-index: 99999;
-                    display: none;
-                    overflow: auto;
-                    margin: 15px;
-                    pointer-events: none;
-                    background-color: white;
-                  }
-
-                  #preview-popup iframe,
-                  #preview-popup img {
-                    max-width: 100%;
-                    max-height: 100%;
-                  }
-                </style>
-            `;
-            $('head').append(previewStyles);
-        }
-
-        if ($('#preview-popup').length === 0) {
-            const previewDiv = $('<div>', { id: 'preview-popup' });
-            $('body').append(previewDiv);
-        }
-    };
-
-    const removePreviewElements = () => {
-        $('#preview-popup').remove();
-        $(`#${styleId}`).remove();
-    };
-
-    const bindHoverPreview = () => {
-        $('body').off('mouseenter.preview mouseleave.preview');
-
-        $('body').on('mouseenter.preview', '.dropdown-menu a', function () {
-            clearTimeout(previewTimeout);
-            createPreviewElements();
-
-            const href = $(this).attr('href');
-            if (!href) return;
-
-            let content = '';
-            if (/\.(pdf)$/i.test(href)) {
-                content = `<iframe src="${href}" frameborder="0"></iframe>`;
+    function parseFilename(url) {
+        try {
+            const urlObj = new URL(url);
+            if(urlObj.searchParams.has('key')) {
+                const key = decodeURIComponent(urlObj.searchParams.get('key'));
+                const parts = key.split('/');
+                return parts[parts.length - 1];
             } else {
-                content = `
-                    <img src="${href}" alt="Preview"
-                        onerror="this.onerror=null; this.replaceWith(document.createTextNode('Cannot load preview'));">
-                `;
+                const parts = urlObj.pathname.split('/');
+                return parts[parts.length - 1];
             }
-
-            $('#preview-popup').html(content).fadeIn(100);
-        });
-
-        $('body').on('mouseleave.preview', '.dropdown-menu a, .dropdown-menu', function () {
-            previewTimeout = setTimeout(() => {
-                $('#preview-popup').fadeOut(200, removePreviewElements);
-            }, 300);
-        });
-    };
-
-    const unbindHoverPreview = () => {
-        $('body').off('mouseenter.preview mouseleave.preview');
-        removePreviewElements();
-    };
-
-    const startObserver = () => {
-        if (observer) return;
-        observer = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                if (
-                    mutation.addedNodes.length &&
-                    Array.from(mutation.addedNodes).some(node =>
-                        node.nodeType === 1 && $(node).find('.dropdown-menu a').length
-                    )
-                ) {
-                    bindHoverPreview();
-                    break;
-                }
-            }
-        });
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    };
-
-    const stopObserver = () => {
-        if (observer) {
-            observer.disconnect();
-            observer = null;
+        } catch(e) {
+            return null;
         }
-    };
+    }
 
-    const checkAndRun = () => {
-        const isOrderPage = /\/order/.test(window.location.href);
+    const imageExtensions = ['png', 'jpg', 'jpeg', 'heic'];
+    const pdfExtensions = ['pdf'];
 
-        if (isOrderPage) {
-            bindHoverPreview();
-            startObserver();
+    const previewDiv = document.createElement('div');
+    previewDiv.style.position = 'fixed';
+    previewDiv.style.top = '20px';
+    previewDiv.style.left = '20px';
+    previewDiv.style.backgroundColor = 'white';
+    previewDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+    previewDiv.style.zIndex = '9999';
+    previewDiv.style.display = 'none';
+    previewDiv.style.paddingTop = '40px';
+    previewDiv.style.boxSizing = 'border-box';
+    previewDiv.style.fontFamily = 'Arial, sans-serif';
+    previewDiv.style.overflow = 'hidden';
+    previewDiv.style.borderRadius = '4px';
+
+    const filenameLabel = document.createElement('div');
+    filenameLabel.style.position = 'absolute';
+    filenameLabel.style.top = '0';
+    filenameLabel.style.left = '0';
+    filenameLabel.style.width = '100%';
+    filenameLabel.style.height = '40px';
+    filenameLabel.style.lineHeight = '40px';
+    filenameLabel.style.textAlign = 'center';
+    filenameLabel.style.fontWeight = '700';
+    filenameLabel.style.fontSize = '16px';
+    filenameLabel.style.borderBottom = '1px solid #ccc';
+    filenameLabel.style.backgroundColor = '#fff';
+    filenameLabel.style.boxSizing = 'border-box';
+    filenameLabel.style.userSelect = 'none';
+    previewDiv.appendChild(filenameLabel);
+
+    const previewContent = document.createElement('div');
+    previewContent.style.width = '100%';
+    previewContent.style.height = 'calc(100% - 40px)';
+    previewContent.style.display = 'flex';
+    previewContent.style.alignItems = 'center';
+    previewContent.style.justifyContent = 'center';
+    previewContent.style.overflow = 'hidden';
+    previewDiv.appendChild(previewContent);
+
+    document.body.appendChild(previewDiv);
+
+    document.body.addEventListener('mouseover', function(event) {
+        const target = event.target.closest('a[href]');
+        if (!target) return;
+        if (!target.closest('.dropdown-menu')) return;
+
+        const filename = parseFilename(target.href);
+        if (!filename) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+
+        const dotIndex = filename.lastIndexOf('.');
+        if (dotIndex === -1) {
+            previewDiv.style.display = 'none';
+            return;
+        }
+
+        const ext = filename.slice(dotIndex + 1).toLowerCase();
+
+        if (imageExtensions.includes(ext) || pdfExtensions.includes(ext)) {
+            console.log(`${filename} TO JEST ${ext.toUpperCase()}`);
+
+            filenameLabel.textContent = filename;
+            previewContent.innerHTML = '';
+
+            if (imageExtensions.includes(ext)) {
+                const img = document.createElement('img');
+                img.src = target.href;
+                img.style.display = 'block';
+                img.style.objectFit = 'contain';
+                img.style.maxWidth = '50vw';
+                img.style.maxHeight = '80vh';
+
+                img.onload = () => {
+                    const width = img.naturalWidth;
+                    const height = img.naturalHeight;
+
+                    const maxWidth = window.innerWidth * 0.5;
+                    const maxHeight = window.innerHeight * 0.8;
+                    const minWidth = window.innerWidth * 0.3;
+                    const minHeight = window.innerHeight * 0.1;
+
+                    const widthRatio = maxWidth / width;
+                    const heightRatio = maxHeight / height;
+                    const ratio = Math.min(widthRatio, heightRatio, 1);
+
+                    let displayWidth = width * ratio;
+                    let displayHeight = height * ratio;
+
+                    displayWidth = Math.max(displayWidth, minWidth);
+                    displayHeight = Math.max(displayHeight, minHeight);
+
+                    previewDiv.style.width = `${displayWidth}px`;
+                    previewDiv.style.height = `${displayHeight + 40}px`;
+                    previewDiv.style.top = '20px';
+                    previewDiv.style.left = '20px';
+                };
+                previewContent.appendChild(img);
+
+            } else if (pdfExtensions.includes(ext)) {
+                previewDiv.style.width = '50vw';
+                previewDiv.style.height = '70vh';
+                previewDiv.style.top = '20px';
+                previewDiv.style.left = '20px';
+
+                const obj = document.createElement('object');
+                obj.data = target.href;
+                obj.type = 'application/pdf';
+                obj.style.width = '100%';
+                obj.style.height = '100%';
+                previewContent.appendChild(obj);
+            }
+
+            previewDiv.style.display = 'block';
+
         } else {
-            unbindHoverPreview();
-            stopObserver();
+            previewDiv.style.display = 'none';
         }
-    };
-
-    $(document).ready(() => {
-        checkAndRun();
     });
 
-    let lastUrl = location.href;
-    setInterval(() => {
-        const currentUrl = location.href;
-        if (currentUrl !== lastUrl) {
-            lastUrl = currentUrl;
-            checkAndRun();
+    document.body.addEventListener('mouseout', function(event) {
+        const related = event.relatedTarget;
+        if (!related || !event.target.closest) return;
+
+        const fromLink = event.target.closest('a[href]');
+        if (fromLink && fromLink.closest('.dropdown-menu')) {
+            if (!related.closest || !related.closest('.dropdown-menu')) {
+                previewDiv.style.display = 'none';
+                previewContent.innerHTML = '';
+            }
         }
-    }, 500);
+    });
 
 })();
