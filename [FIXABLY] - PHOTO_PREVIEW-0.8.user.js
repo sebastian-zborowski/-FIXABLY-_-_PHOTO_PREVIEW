@@ -21,88 +21,88 @@
 (function () {
     'use strict';
 
-    const userScript = `
-    function parseFilename(url) {
-        try {
-            const urlObj = new URL(url);
-            if(urlObj.searchParams.has('key')) {
-                const key = decodeURIComponent(urlObj.searchParams.get('key'));
-                const parts = key.split('/');
-                return parts[parts.length - 1];
-            } else {
-                const parts = urlObj.pathname.split('/');
-                return parts[parts.length - 1];
+    if (!/^https:\/\/ispot\.fixably\.com\/pl\/orders\/3\d+/.test(location.href)) return;
+
+    const code = `(() => {
+        // URLa dozwolone
+        if (!/^https:\\/\\/ispot\\.fixably\\.com\\/pl\\/orders\\/3\\d+/.test(location.href)) return;
+
+        function parseFilename(url) {
+            try {
+                const urlObj = new URL(url);
+                if(urlObj.searchParams.has('key')) {
+                    const key = decodeURIComponent(urlObj.searchParams.get('key'));
+                    const parts = key.split('/');
+                    return parts[parts.length - 1];
+                } else {
+                    const parts = urlObj.pathname.split('/');
+                    return parts[parts.length - 1];
+                }
+            } catch(e) {
+                return null;
             }
-        } catch(e) {
-            return null;
-        }
-    }
-
-    const iframeExtensions = ['png', 'heic', 'pdf'];
-    const imgExtensions = ['jpg', 'jpeg'];
-
-    const previewDiv = document.createElement('div');
-    previewDiv.style.position = 'fixed';
-    previewDiv.style.top = '20px';
-    previewDiv.style.left = '20px';
-    previewDiv.style.backgroundColor = 'white';
-    previewDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
-    previewDiv.style.zIndex = '9999';
-    previewDiv.style.display = 'none';
-    previewDiv.style.paddingTop = '40px';
-    previewDiv.style.boxSizing = 'border-box';
-    previewDiv.style.fontFamily = 'Arial, sans-serif';
-    previewDiv.style.overflow = 'hidden';
-    previewDiv.style.borderRadius = '4px';
-
-    const filenameLabel = document.createElement('div');
-    filenameLabel.style.position = 'absolute';
-    filenameLabel.style.top = '0';
-    filenameLabel.style.left = '0';
-    filenameLabel.style.width = '100%';
-    filenameLabel.style.height = '40px';
-    filenameLabel.style.lineHeight = '40px';
-    filenameLabel.style.textAlign = 'center';
-    filenameLabel.style.fontWeight = '700';
-    filenameLabel.style.fontSize = '16px';
-    filenameLabel.style.borderBottom = '1px solid #ccc';
-    filenameLabel.style.backgroundColor = '#fff';
-    filenameLabel.style.boxSizing = 'border-box';
-    filenameLabel.style.userSelect = 'none';
-    previewDiv.appendChild(filenameLabel);
-
-    const previewContent = document.createElement('div');
-    previewContent.style.width = '100%';
-    previewContent.style.height = 'calc(100% - 40px)';
-    previewContent.style.display = 'flex';
-    previewContent.style.alignItems = 'center';
-    previewContent.style.justifyContent = 'center';
-    previewContent.style.overflow = 'hidden';
-    previewDiv.appendChild(previewContent);
-
-    document.body.appendChild(previewDiv);
-
-    document.body.addEventListener('mouseover', function(event) {
-        const target = event.target.closest('a[href]');
-        if (!target) return;
-        if (!target.closest('.dropdown-menu')) return;
-
-        const filename = parseFilename(target.href);
-        if (!filename) {
-            previewDiv.style.display = 'none';
-            return;
         }
 
-        const dotIndex = filename.lastIndexOf('.');
-        if (dotIndex === -1) {
-            previewDiv.style.display = 'none';
-            return;
-        }
+        const iframeExtensions = ['png', 'heic', 'pdf'];
+        const imgExtensions = ['jpg', 'jpeg'];
 
-        const ext = filename.slice(dotIndex + 1).toLowerCase();
+        const previewDiv = document.createElement('div');
+        Object.assign(previewDiv.style, {
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            backgroundColor: 'white',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            zIndex: '9999',
+            display: 'none',
+            paddingTop: '40px',
+            boxSizing: 'border-box',
+            fontFamily: 'Arial, sans-serif',
+            overflow: 'hidden',
+            borderRadius: '4px',
+        });
 
-        if (iframeExtensions.includes(ext) || imgExtensions.includes(ext)) {
-            console.log(\`\${filename} TO JEST \${ext.toUpperCase()}\`);
+        const filenameLabel = document.createElement('div');
+        Object.assign(filenameLabel.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '40px',
+            lineHeight: '40px',
+            textAlign: 'center',
+            fontWeight: '700',
+            fontSize: '16px',
+            borderBottom: '1px solid #ccc',
+            backgroundColor: '#fff',
+            boxSizing: 'border-box',
+            userSelect: 'none',
+        });
+        previewDiv.appendChild(filenameLabel);
+
+        const previewContent = document.createElement('div');
+        Object.assign(previewContent.style, {
+            width: '100%',
+            height: 'calc(100% - 40px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+        });
+        previewDiv.appendChild(previewContent);
+
+        document.body.appendChild(previewDiv);
+
+        document.body.addEventListener('mouseover', function(event) {
+            const link = event.target.closest('a[href]');
+            if (!link || !link.closest('.dropdown-menu')) return;
+
+            const filename = parseFilename(link.href);
+            if (!filename) return;
+
+            const ext = filename.split('.').pop().toLowerCase();
+
+            if (![...iframeExtensions, ...imgExtensions].includes(ext)) return;
 
             filenameLabel.textContent = filename;
             previewContent.innerHTML = '';
@@ -110,11 +110,9 @@
             if (iframeExtensions.includes(ext)) {
                 previewDiv.style.width = '50vw';
                 previewDiv.style.height = '70vh';
-                previewDiv.style.top = '20px';
-                previewDiv.style.left = '20px';
 
                 const iframe = document.createElement('iframe');
-                iframe.src = target.href;
+                iframe.src = link.href;
                 iframe.style.width = '100%';
                 iframe.style.height = '100%';
                 iframe.style.border = 'none';
@@ -123,7 +121,7 @@
 
             } else if (imgExtensions.includes(ext)) {
                 const img = document.createElement('img');
-                img.src = target.href;
+                img.src = link.href;
                 img.style.display = 'block';
                 img.style.objectFit = 'contain';
                 img.style.maxWidth = '50vw';
@@ -148,38 +146,25 @@
                     displayWidth = Math.max(displayWidth, minWidth);
                     displayHeight = Math.max(displayHeight, minHeight);
 
-                    previewDiv.style.width = \`\${displayWidth}px\`;
-                    previewDiv.style.height = \`\${displayHeight + 40}px\`;
-                    previewDiv.style.top = '20px';
-                    previewDiv.style.left = '20px';
+                    previewDiv.style.width = displayWidth + 'px';
+                    previewDiv.style.height = (displayHeight + 40) + 'px';
                 };
 
                 previewContent.appendChild(img);
             }
 
             previewDiv.style.display = 'block';
+        });
 
-        } else {
-            previewDiv.style.display = 'none';
-        }
-    });
-
-    document.body.addEventListener('mouseout', function(event) {
-        const related = event.relatedTarget;
-        if (!related || !event.target.closest) return;
-
-        const fromLink = event.target.closest('a[href]');
-        if (fromLink && fromLink.closest('.dropdown-menu')) {
-            if (!related.closest || !related.closest('.dropdown-menu')) {
+        document.body.addEventListener('mouseout', function(event) {
+            if (!event.relatedTarget || !previewDiv.contains(event.relatedTarget)) {
                 previewDiv.style.display = 'none';
                 previewContent.innerHTML = '';
             }
-        }
-    });
-    `;
+        });
+    })();`;
 
-    const scriptTag = document.createElement('script');
-    scriptTag.type = 'text/javascript';
-    scriptTag.textContent = userScript;
-    document.head.appendChild(scriptTag);
+    const script = document.createElement('script');
+    script.textContent = code;
+    document.documentElement.appendChild(script);
 })();
