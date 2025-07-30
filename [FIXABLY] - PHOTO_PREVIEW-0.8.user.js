@@ -1,16 +1,20 @@
 // ==UserScript==
 // @name         [FIXABLY] - PHOTO_PREVIEW
-// @version      0.8
+// @version      1.0
 // @description  Podgląd załączonych do Fixably plików, po najechaniu na nie
 // @author       Sebastian Zborowski
 // @match        https://ispot.fixably.com/pl/*
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
+// @updateURL    https://github.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/blob/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @downloadURL  https://github.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/blob/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
 // ==/UserScript==
 
 //Disclaimer:
 //Niniejszy skrypt został utworzony metodą Vibecodingu. Nie ingeruje trwale w oryginalne strony internetowe, nie odwołuje się do danych prywatnych ani chronionych przepisami RODO,
 //nie przetwarza danych osobowych, a także nie zmienia podstawowego działania strony. Skrypt dodaje kilka automatyzacji, skrótów oraz modyfikacje wizualne, które mają na celu
 //usprawnienie i ułatwienie korzystania z serwisu.
+
+//Ostatnia aktualizacja 30.07.2025
 
 (function () {
     'use strict';
