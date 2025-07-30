@@ -4,8 +4,8 @@
 // @description  Podgląd załączonych do Fixably plików, po najechaniu na nie
 // @author       Sebastian Zborowski
 // @match        https://ispot.fixably.com/pl/*
-// @updateURL    https://raw.githubusercontent.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
-// @downloadURL  https://raw.githubusercontent.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @updateURL    https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @downloadURL  https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @grant        none
 // ==/UserScript==
