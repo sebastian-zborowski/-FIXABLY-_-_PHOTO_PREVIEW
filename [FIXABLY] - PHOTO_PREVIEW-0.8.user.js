@@ -15,7 +15,7 @@
 //nie przetwarza danych osobowych, a także nie zmienia podstawowego działania strony. Skrypt dodaje kilka automatyzacji, skrótów oraz modyfikacje wizualne, które mają na celu
 //usprawnienie i ułatwienie korzystania z serwisu.
 
-//Ostatnia aktualizacja 30.07.2025
+//Ostatnia aktualizacja 31.07.2025
 
 (function () {
     'use strict';
