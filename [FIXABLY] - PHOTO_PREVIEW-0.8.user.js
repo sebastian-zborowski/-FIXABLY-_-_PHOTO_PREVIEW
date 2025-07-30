@@ -18,6 +18,19 @@
 
 //Ostatnia aktualizacja 31.07.2025
 
+// ==UserScript==
+// @name         [FIXABLY] - PHOTO_PREVIEW
+// @version      1.5
+// @description  Podgląd załączonych do Fixably plików, po najechaniu na nie (iframe dla PNG, HEIC, PDF; img dla JPG/JPEG)
+// @author       Sebastian Zborowski
+// @match        https://ispot.fixably.com/pl/*
+// @updateURL    https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @downloadURL  https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @require      https://code.jquery.com/jquery-3.6.0.min.js
+// @grant        none
+// @source       https://github.com/sebastian-zborowski
+// ==/UserScript==
+
 (function () {
     'use strict';
 
@@ -37,8 +50,8 @@
         }
     }
 
-    const imageExtensions = ['png', 'jpg', 'jpeg', 'heic'];
-    const pdfExtensions = ['pdf'];
+    const iframeExtensions = ['png', 'heic', 'pdf'];
+    const imgExtensions = ['jpg', 'jpeg'];
 
     const previewDiv = document.createElement('div');
     previewDiv.style.position = 'fixed';
@@ -100,13 +113,29 @@
 
         const ext = filename.slice(dotIndex + 1).toLowerCase();
 
-        if (imageExtensions.includes(ext) || pdfExtensions.includes(ext)) {
+        if (iframeExtensions.includes(ext) || imgExtensions.includes(ext)) {
             console.log(`${filename} TO JEST ${ext.toUpperCase()}`);
 
             filenameLabel.textContent = filename;
             previewContent.innerHTML = '';
 
-            if (imageExtensions.includes(ext)) {
+            if (iframeExtensions.includes(ext)) {
+                // iframe preview dla png, heic, pdf
+                previewDiv.style.width = '50vw';
+                previewDiv.style.height = '70vh';
+                previewDiv.style.top = '20px';
+                previewDiv.style.left = '20px';
+
+                const iframe = document.createElement('iframe');
+                iframe.src = target.href;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.style.backgroundColor = 'white';
+                previewContent.appendChild(iframe);
+
+            } else if (imgExtensions.includes(ext)) {
+                // img preview dla jpg/jpeg
                 const img = document.createElement('img');
                 img.src = target.href;
                 img.style.display = 'block';
@@ -121,7 +150,7 @@
                     const maxWidth = window.innerWidth * 0.5;
                     const maxHeight = window.innerHeight * 0.8;
                     const minWidth = window.innerWidth * 0.3;
-                    const minHeight = window.innerHeight * 0.1;
+                    const minHeight = window.innerHeight * 0.3;
 
                     const widthRatio = maxWidth / width;
                     const heightRatio = maxHeight / height;
@@ -138,20 +167,8 @@
                     previewDiv.style.top = '20px';
                     previewDiv.style.left = '20px';
                 };
+
                 previewContent.appendChild(img);
-
-            } else if (pdfExtensions.includes(ext)) {
-                previewDiv.style.width = '50vw';
-                previewDiv.style.height = '70vh';
-                previewDiv.style.top = '20px';
-                previewDiv.style.left = '20px';
-
-                const obj = document.createElement('object');
-                obj.data = target.href;
-                obj.type = 'application/pdf';
-                obj.style.width = '100%';
-                obj.style.height = '100%';
-                previewContent.appendChild(obj);
             }
 
             previewDiv.style.display = 'block';
