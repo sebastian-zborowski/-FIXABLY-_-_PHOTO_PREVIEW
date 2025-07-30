@@ -21,10 +21,10 @@
 (function () {
     'use strict';
 
+    // Jeśli nie jesteśmy na stronie naprawy, nie wstrzykujemy
     if (!/^https:\/\/ispot\.fixably\.com\/pl\/orders\/3\d+/.test(location.href)) return;
 
     const code = `(() => {
-        // URLa dozwolone
         if (!/^https:\\/\\/ispot\\.fixably\\.com\\/pl\\/orders\\/3\\d+/.test(location.href)) return;
 
         function parseFilename(url) {
@@ -94,72 +94,95 @@
         document.body.appendChild(previewDiv);
 
         document.body.addEventListener('mouseover', function(event) {
-            const link = event.target.closest('a[href]');
-            if (!link || !link.closest('.dropdown-menu')) return;
+            const target = event.target.closest('a[href]');
+            if (!target) return;
+            if (!target.closest('.dropdown-menu')) return;
 
-            const filename = parseFilename(link.href);
-            if (!filename) return;
-
-            const ext = filename.split('.').pop().toLowerCase();
-
-            if (![...iframeExtensions, ...imgExtensions].includes(ext)) return;
-
-            filenameLabel.textContent = filename;
-            previewContent.innerHTML = '';
-
-            if (iframeExtensions.includes(ext)) {
-                previewDiv.style.width = '50vw';
-                previewDiv.style.height = '70vh';
-
-                const iframe = document.createElement('iframe');
-                iframe.src = link.href;
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                iframe.style.backgroundColor = 'white';
-                previewContent.appendChild(iframe);
-
-            } else if (imgExtensions.includes(ext)) {
-                const img = document.createElement('img');
-                img.src = link.href;
-                img.style.display = 'block';
-                img.style.objectFit = 'contain';
-                img.style.maxWidth = '50vw';
-                img.style.maxHeight = '80vh';
-
-                img.onload = () => {
-                    const width = img.naturalWidth;
-                    const height = img.naturalHeight;
-
-                    const maxWidth = window.innerWidth * 0.5;
-                    const maxHeight = window.innerHeight * 0.8;
-                    const minWidth = window.innerWidth * 0.3;
-                    const minHeight = window.innerHeight * 0.3;
-
-                    const widthRatio = maxWidth / width;
-                    const heightRatio = maxHeight / height;
-                    const ratio = Math.min(widthRatio, heightRatio, 1);
-
-                    let displayWidth = width * ratio;
-                    let displayHeight = height * ratio;
-
-                    displayWidth = Math.max(displayWidth, minWidth);
-                    displayHeight = Math.max(displayHeight, minHeight);
-
-                    previewDiv.style.width = displayWidth + 'px';
-                    previewDiv.style.height = (displayHeight + 40) + 'px';
-                };
-
-                previewContent.appendChild(img);
+            const filename = parseFilename(target.href);
+            if (!filename) {
+                previewDiv.style.display = 'none';
+                return;
             }
 
-            previewDiv.style.display = 'block';
+            const dotIndex = filename.lastIndexOf('.');
+            if (dotIndex === -1) {
+                previewDiv.style.display = 'none';
+                return;
+            }
+
+            const ext = filename.slice(dotIndex + 1).toLowerCase();
+
+            if (iframeExtensions.includes(ext) || imgExtensions.includes(ext)) {
+                filenameLabel.textContent = filename;
+                previewContent.innerHTML = '';
+
+                if (iframeExtensions.includes(ext)) {
+                    previewDiv.style.width = '50vw';
+                    previewDiv.style.height = '70vh';
+                    previewDiv.style.top = '20px';
+                    previewDiv.style.left = '20px';
+
+                    const iframe = document.createElement('iframe');
+                    iframe.src = target.href;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.backgroundColor = 'white';
+                    previewContent.appendChild(iframe);
+
+                } else if (imgExtensions.includes(ext)) {
+                    const img = document.createElement('img');
+                    img.src = target.href;
+                    img.style.display = 'block';
+                    img.style.objectFit = 'contain';
+                    img.style.maxWidth = '50vw';
+                    img.style.maxHeight = '80vh';
+
+                    img.onload = () => {
+                        const width = img.naturalWidth;
+                        const height = img.naturalHeight;
+
+                        const maxWidth = window.innerWidth * 0.5;
+                        const maxHeight = window.innerHeight * 0.8;
+                        const minWidth = window.innerWidth * 0.3;
+                        const minHeight = window.innerHeight * 0.3;
+
+                        const widthRatio = maxWidth / width;
+                        const heightRatio = maxHeight / height;
+                        const ratio = Math.min(widthRatio, heightRatio, 1);
+
+                        let displayWidth = width * ratio;
+                        let displayHeight = height * ratio;
+
+                        displayWidth = Math.max(displayWidth, minWidth);
+                        displayHeight = Math.max(displayHeight, minHeight);
+
+                        previewDiv.style.width = displayWidth + 'px';
+                        previewDiv.style.height = (displayHeight + 40) + 'px';
+                        previewDiv.style.top = '20px';
+                        previewDiv.style.left = '20px';
+                    };
+
+                    previewContent.appendChild(img);
+                }
+
+                previewDiv.style.display = 'block';
+
+            } else {
+                previewDiv.style.display = 'none';
+            }
         });
 
         document.body.addEventListener('mouseout', function(event) {
-            if (!event.relatedTarget || !previewDiv.contains(event.relatedTarget)) {
-                previewDiv.style.display = 'none';
-                previewContent.innerHTML = '';
+            const related = event.relatedTarget;
+            if (!related || !event.target.closest) return;
+
+            const fromLink = event.target.closest('a[href]');
+            if (fromLink && fromLink.closest('.dropdown-menu')) {
+                if (!related.closest || !related.closest('.dropdown-menu')) {
+                    previewDiv.style.display = 'none';
+                    previewContent.innerHTML = '';
+                }
             }
         });
     })();`;
