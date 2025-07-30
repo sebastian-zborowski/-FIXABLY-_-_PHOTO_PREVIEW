@@ -5,8 +5,8 @@
 // @author       Sebastian Zborowski
 // @match        https://ispot.fixably.com/pl/*
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
-// @updateURL    https://github.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/blob/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
-// @downloadURL  https://github.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/blob/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @updateURL    https://raw.githubusercontent.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
+// @downloadURL  https://raw.githubusercontent.com/sebastian-zborowski/-FIXABLY-_-_PHOTO_PREVIEW/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js
 // @grant        none
 // ==/UserScript==
 
