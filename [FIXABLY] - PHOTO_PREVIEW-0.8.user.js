@@ -21,12 +21,6 @@
 (function () {
     'use strict';
 
-// Kontrola wersji alert ---------------------------------------------------------
-    const SCRIPT_NAME = 'PHOTO_PREVIEW';
-    const CURRENT_VERSION = '1.0';
-// -------------------------------------------------------------------------------
-
-    // Jeśli nie jesteśmy na stronie naprawy, nie wstrzykujemy
     if (!/^https:\/\/ispot\.fixably\.com\/pl\/orders\/3\d+/.test(location.href)) return;
 
     const code = `(() => {
@@ -203,12 +197,7 @@
     ];
 
     const currentVersions = {
-        VERSION_CONTROL_SYSTEM: '1.0',
-        PASTE_LINK: '1.0',
-        INTERFACE_TWEAKS: '1.0',
-        PHOTO_PREVIEW: '0.8',
-        'ACTION-REQUIRED': '1.0',
-        ADD_PARTS: '1.0',
+        PHOTO_PREVIEW: '1.0',
     };
 
     await Promise.all(scriptList.map(async script => {
