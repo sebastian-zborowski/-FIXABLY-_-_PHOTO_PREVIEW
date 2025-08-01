@@ -21,82 +21,72 @@
 (function() {
     'use strict';
 
-    const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic'];
-    const SUPPORTED_PDF_EXTENSIONS = ['.pdf'];
+    const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.pdf'];
 
-    function isImageFile(href) {
-        return SUPPORTED_IMAGE_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
+    function isSupportedFile(href) {
+        return SUPPORTED_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
     }
 
-    function isPdfFile(href) {
-        return SUPPORTED_PDF_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
-    }
+function createPreviewFrame() {
+    const frame = document.createElement('iframe');
+    frame.style.position = 'absolute';
+    frame.style.top = '20px';
+    frame.style.left = '20px';
 
-    function createPreviewDiv() {
-        const div = document.createElement('div');
-        div.id = 'filePreviewDiv';
+    frame.style.width = '50vw';
+    frame.style.height = '70vh';
+    frame.style.maxWidth = '90vw';
+    frame.style.maxHeight = '90vh';
 
-        Object.assign(div.style, {
-            position: 'fixed',
-            top: '20px',
-            left: '20px',
-            width: '50vw',
-            height: '70vh',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            minWidth: '10vw',
-            minHeight: '10vh',
-            zIndex: '9999',
-            border: '2px solid #444',
-            borderRadius: '8px',
-            boxShadow: '0 0 12px rgba(0,0,0,0.3)',
-            backgroundColor: '#eee',
-            display: 'none',
-            overflow: 'hidden',
-            padding: '0',
-        });
+    frame.style.minWidth = '10vw';
+    frame.style.minHeight = '10vh';
 
-        document.body.appendChild(div);
-        return div;
-    }
+    frame.style.zIndex = '9999';
+    frame.style.border = '2px solid #444';
+    frame.style.borderRadius = '8px';
+    frame.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+    frame.style.background = 'white';
+    frame.style.display = 'none';
+    frame.style.overflow = 'hidden';
 
-    const previewDiv = createPreviewDiv();
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+    frame.id = 'filePreviewFrame';
 
+    document.body.appendChild(frame);
+    return frame;
+}
+
+    const previewFrame = createPreviewFrame();
     window.preview = function(event) {
         const link = event.currentTarget;
         const href = link.getAttribute('href');
-        if (!href) return;
 
-        previewDiv.innerHTML = '';
+        if (!isSupportedFile(href)) return;
 
-        if (isImageFile(href)) {
-            const img = document.createElement('img');
-            img.src = href;
-            Object.assign(img.style, {
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                display: 'block',
-                margin: 'auto',
-            });
-            previewDiv.appendChild(img);
-        } else if (isPdfFile(href)) {
-            const embed = document.createElement('embed');
-            embed.src = href;
-            embed.type = 'application/pdf';
-            embed.style.width = '100%';
-            embed.style.height = '100%';
-            previewDiv.appendChild(embed);
-        } else {
-            return; // nieobsługiwany format
-        }
+        previewFrame.onload = () => {
+            try {
+                const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+                const img = doc.querySelector('img');
+                if (img) {
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
+                    img.style.objectFit = 'contain';
+                    img.style.display = 'block';
+                    img.style.margin = 'auto';
+                }
+            } catch (e) {
+                // wyłapywanie błędów CORS'a
+            }
+        };
 
-        previewDiv.style.display = 'block';
+        previewFrame.src = href;
+        previewFrame.style.display = 'block';
     };
 
     window.hidePreview = function() {
-        previewDiv.style.display = 'none';
-        previewDiv.innerHTML = '';
+        previewFrame.style.display = 'none';
+        previewFrame.src = '';
     };
 
     function attachPreviewHandlers() {
@@ -104,7 +94,7 @@
         allLinks.forEach(link => {
             const href = link.getAttribute('href');
             if (link.dataset.previewBound) return;
-            if (!isImageFile(href) && !isPdfFile(href)) return;
+            if (!isSupportedFile(href)) return;
 
             link.setAttribute('onmouseover', 'preview(event)');
             link.setAttribute('onmouseout', 'hidePreview()');
@@ -117,10 +107,9 @@
 
     attachPreviewHandlers();
 
-// Kontrola wersji alert ---------------------------------------------------------
-    checkScriptVersions();
 
-function checkScriptVersions() {
+// Kontrola wersji alert ---------------------------------------------------------
+(async function() {
     const scriptList = [
         { name: 'PHOTO_PREVIEW', url: 'https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js' },
     ];
@@ -129,42 +118,41 @@ function checkScriptVersions() {
         PHOTO_PREVIEW: '1.0',
     };
 
-    Promise.all(scriptList.map(script => {
-        return fetch(script.url)
-            .then(res => res.text())
-            .then(text => {
-                const match = text.match(/@version\s+([0-9.]+)/);
-                if (match) {
-                    const version = match[1];
-                    localStorage.setItem(script.name, JSON.stringify({
-                        name: script.name,
-                        remote: version
-                    }));
-                    console.log(`[VERSION CONTROL] ${script.name}: ${version}`);
-                } else {
-                    console.warn(`[VERSION CONTROL] Nie znaleziono wersji dla: ${script.name}`);
-                }
-            })
-            .catch(err => {
-                console.warn(`[VERSION CONTROL] Błąd ładowania ${script.name}:`, err);
-            });
-    })).then(() => {
-        let popupCount = 0;
-        scriptList.forEach(script => {
-            const storedStr = localStorage.getItem(script.name);
-            if (!storedStr) return;
-            try {
-                const data = JSON.parse(storedStr);
-                const remoteVer = data?.remote;
-                const currentVer = currentVersions[script.name] || '0.0';
-
-                if (remoteVer && compareVersions(remoteVer, currentVer) > 0) {
-                    showUpdatePopup(script.name, currentVer, remoteVer, popupCount++);
-                }
-            } catch(e) {
-                console.warn(`[UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:`, e);
+    await Promise.all(scriptList.map(async script => {
+        try {
+            const res = await fetch(script.url);
+            const text = await res.text();
+            const match = text.match(/@version\s+([0-9.]+)/);
+            if (match) {
+                const version = match[1];
+                localStorage.setItem(script.name, JSON.stringify({
+                    name: script.name,
+                    remote: version
+                }));
+                console.log([VERSION CONTROL] ${script.name}: ${version});
+            } else {
+                console.warn([VERSION CONTROL] Nie znaleziono wersji dla: ${script.name});
             }
-        });
+        } catch (err) {
+            console.warn([VERSION CONTROL] Błąd ładowania ${script.name}:, err);
+        }
+    }));
+
+    let popupCount = 0;
+    scriptList.forEach(script => {
+        const storedStr = localStorage.getItem(script.name);
+        if (!storedStr) return;
+        try {
+            const data = JSON.parse(storedStr);
+            const remoteVer = data?.remote;
+            const currentVer = currentVersions[script.name] || '0.0';
+
+            if (remoteVer && compareVersions(remoteVer, currentVer) > 0) {
+                showUpdatePopup(script.name, currentVer, remoteVer, popupCount++);
+            }
+        } catch(e) {
+            console.warn([UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:, e);
+        }
     });
 
     function compareVersions(v1, v2) {
@@ -182,25 +170,25 @@ function checkScriptVersions() {
 
     function showUpdatePopup(scriptName, current, remote, index) {
         const popup = document.createElement('div');
-        popup.textContent = `🔔 Aktualizacja dostępna dla ${scriptName}: ${remote} (masz ${current})`;
+        popup.textContent = 🔔 Aktualizacja dostępna dla ${scriptName}: ${remote} (masz ${current});
         Object.assign(popup.style, {
-            position: 'fixed',
-            bottom: `${20 + index * 100}px`,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#222',
-            color: '#fff',
-            padding: '24px 36px',
-            borderRadius: '16px',
-            fontSize: '18px',
-            zIndex: 9999 + index,
-            boxShadow: '0 0 20px rgba(0,0,0,0.4)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            transition: 'opacity 0.3s ease',
-            opacity: '1',
-            maxWidth: '90%',
-            textAlign: 'center',
+        position: 'fixed',
+        bottom: ${20 + index * 100}px,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: '#222',
+        color: '#fff',
+        padding: '24px 36px',
+        borderRadius: '16px',
+        fontSize: '18px',
+        zIndex: 9999 + index,
+        boxShadow: '0 0 20px rgba(0,0,0,0.4)',
+        cursor: 'pointer',
+        userSelect: 'none',
+        transition: 'opacity 0.3s ease',
+        opacity: '1',
+        maxWidth: '90%',
+        textAlign: 'center',
         });
 
         popup.addEventListener('click', () => popup.remove());
@@ -208,11 +196,14 @@ function checkScriptVersions() {
         document.body.appendChild(popup);
 
         setTimeout(() => {
+            // animacja znikania
             popup.style.opacity = '0';
             setTimeout(() => popup.remove(), 500);
         }, 7500);
     }
-}
+})();
 // ---------------------------------------------------------------------------------
 
 })();
+
+
