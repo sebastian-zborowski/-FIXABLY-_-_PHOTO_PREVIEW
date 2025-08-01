@@ -21,72 +21,82 @@
 (function() {
     'use strict';
 
-    const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.pdf'];
+    const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic'];
+    const SUPPORTED_PDF_EXTENSIONS = ['.pdf'];
 
-    function isSupportedFile(href) {
-        return SUPPORTED_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
+    function isImageFile(href) {
+        return SUPPORTED_IMAGE_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
     }
 
-    function createPreviewFrame() {
-        const frame = document.createElement('iframe');
-        frame.style.position = 'absolute';
-        frame.style.top = '20px';
-        frame.style.left = '20px';
-
-        frame.style.width = '50vw';
-        frame.style.height = '70vh';
-        frame.style.maxWidth = '90vw';
-        frame.style.maxHeight = '90vh';
-
-        frame.style.minWidth = '10vw';
-        frame.style.minHeight = '10vh';
-
-        frame.style.zIndex = '9999';
-        frame.style.border = '2px solid #444';
-        frame.style.borderRadius = '8px';
-        frame.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
-        frame.style.background = 'white';
-        frame.style.display = 'none';
-        frame.style.overflow = 'hidden';
-
-        frame.setAttribute('scrolling', 'no');
-        frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        frame.id = 'filePreviewFrame';
-
-        document.body.appendChild(frame);
-        return frame;
+    function isPdfFile(href) {
+        return SUPPORTED_PDF_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
     }
 
-    const previewFrame = createPreviewFrame();
+    function createPreviewDiv() {
+        const div = document.createElement('div');
+        div.id = 'filePreviewDiv';
+
+        Object.assign(div.style, {
+            position: 'fixed',
+            top: '20px',
+            left: '20px',
+            width: '50vw',
+            height: '70vh',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            minWidth: '10vw',
+            minHeight: '10vh',
+            zIndex: '9999',
+            border: '2px solid #444',
+            borderRadius: '8px',
+            boxShadow: '0 0 12px rgba(0,0,0,0.3)',
+            backgroundColor: '#eee',
+            display: 'none',
+            overflow: 'hidden',
+            padding: '0',
+        });
+
+        document.body.appendChild(div);
+        return div;
+    }
+
+    const previewDiv = createPreviewDiv();
+
     window.preview = function(event) {
         const link = event.currentTarget;
         const href = link.getAttribute('href');
+        if (!href) return;
 
-        if (!isSupportedFile(href)) return;
+        previewDiv.innerHTML = '';
 
-        previewFrame.onload = () => {
-            try {
-                const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-                const img = doc.querySelector('img');
-                if (img) {
-                    img.style.maxWidth = '100%';
-                    img.style.maxHeight = '100%';
-                    img.style.objectFit = 'contain';
-                    img.style.display = 'block';
-                    img.style.margin = 'auto';
-                }
-            } catch (e) {
-                // wyłapywanie błędów CORS'a
-            }
-        };
+        if (isImageFile(href)) {
+            const img = document.createElement('img');
+            img.src = href;
+            Object.assign(img.style, {
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                margin: 'auto',
+            });
+            previewDiv.appendChild(img);
+        } else if (isPdfFile(href)) {
+            const embed = document.createElement('embed');
+            embed.src = href;
+            embed.type = 'application/pdf';
+            embed.style.width = '100%';
+            embed.style.height = '100%';
+            previewDiv.appendChild(embed);
+        } else {
+            return; // nieobsługiwany format
+        }
 
-        previewFrame.src = href;
-        previewFrame.style.display = 'block';
+        previewDiv.style.display = 'block';
     };
 
     window.hidePreview = function() {
-        previewFrame.style.display = 'none';
-        previewFrame.src = '';
+        previewDiv.style.display = 'none';
+        previewDiv.innerHTML = '';
     };
 
     function attachPreviewHandlers() {
@@ -94,7 +104,7 @@
         allLinks.forEach(link => {
             const href = link.getAttribute('href');
             if (link.dataset.previewBound) return;
-            if (!isSupportedFile(href)) return;
+            if (!isImageFile(href) && !isPdfFile(href)) return;
 
             link.setAttribute('onmouseover', 'preview(event)');
             link.setAttribute('onmouseout', 'hidePreview()');
@@ -106,8 +116,6 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     attachPreviewHandlers();
-
-
 
 // Kontrola wersji alert ---------------------------------------------------------
     checkScriptVersions();
