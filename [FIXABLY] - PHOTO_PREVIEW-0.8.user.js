@@ -18,180 +18,101 @@
 
 //Ostatnia aktualizacja 01.08.2025
 
-(function () {
+(function() {
     'use strict';
 
-    if (!/^https:\/\/ispot\.fixably\.com\/pl\/orders\/3\d+/.test(location.href)) return;
+    const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.pdf'];
 
-    const code = `(() => {
-        if (!/^https:\\/\\/ispot\\.fixably\\.com\\/pl\\/orders\\/3\\d+/.test(location.href)) return;
+    function isSupportedFile(href) {
+        return SUPPORTED_EXTENSIONS.some(ext => href.toLowerCase().includes(ext));
+    }
 
-        function parseFilename(url) {
+    function createPreviewFrame() {
+        const frame = document.createElement('iframe');
+        frame.style.position = 'absolute';
+        frame.style.top = '20px';
+        frame.style.left = '20px';
+
+        frame.style.width = '50vw';
+        frame.style.height = '70vh';
+        frame.style.maxWidth = '90vw';
+        frame.style.maxHeight = '90vh';
+
+        frame.style.minWidth = '10vw';
+        frame.style.minHeight = '10vh';
+
+        frame.style.zIndex = '9999';
+        frame.style.border = '2px solid #444';
+        frame.style.borderRadius = '8px';
+        frame.style.boxShadow = '0 0 12px rgba(0,0,0,0.3)';
+        frame.style.background = 'white';
+        frame.style.display = 'none';
+        frame.style.overflow = 'hidden';
+
+        frame.setAttribute('scrolling', 'no');
+        frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+        frame.id = 'filePreviewFrame';
+
+        document.body.appendChild(frame);
+        return frame;
+    }
+
+    const previewFrame = createPreviewFrame();
+    window.preview = function(event) {
+        const link = event.currentTarget;
+        const href = link.getAttribute('href');
+
+        if (!isSupportedFile(href)) return;
+
+        previewFrame.onload = () => {
             try {
-                const urlObj = new URL(url);
-                if(urlObj.searchParams.has('key')) {
-                    const key = decodeURIComponent(urlObj.searchParams.get('key'));
-                    const parts = key.split('/');
-                    return parts[parts.length - 1];
-                } else {
-                    const parts = urlObj.pathname.split('/');
-                    return parts[parts.length - 1];
-                }
-            } catch(e) {
-                return null;
-            }
-        }
-
-        const iframeExtensions = ['png', 'heic', 'pdf'];
-        const imgExtensions = ['jpg', 'jpeg'];
-
-        const previewDiv = document.createElement('div');
-        Object.assign(previewDiv.style, {
-            position: 'fixed',
-            top: '20px',
-            left: '20px',
-            backgroundColor: 'white',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-            zIndex: '9999',
-            display: 'none',
-            paddingTop: '40px',
-            boxSizing: 'border-box',
-            fontFamily: 'Arial, sans-serif',
-            overflow: 'hidden',
-            borderRadius: '4px',
-        });
-
-        const filenameLabel = document.createElement('div');
-        Object.assign(filenameLabel.style, {
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '40px',
-            lineHeight: '40px',
-            textAlign: 'center',
-            fontWeight: '700',
-            fontSize: '16px',
-            borderBottom: '1px solid #ccc',
-            backgroundColor: '#fff',
-            boxSizing: 'border-box',
-            userSelect: 'none',
-        });
-        previewDiv.appendChild(filenameLabel);
-
-        const previewContent = document.createElement('div');
-        Object.assign(previewContent.style, {
-            width: '100%',
-            height: 'calc(100% - 40px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-        });
-        previewDiv.appendChild(previewContent);
-
-        document.body.appendChild(previewDiv);
-
-        document.body.addEventListener('mouseover', function(event) {
-            const target = event.target.closest('a[href]');
-            if (!target) return;
-            if (!target.closest('.dropdown-menu')) return;
-
-            const filename = parseFilename(target.href);
-            if (!filename) {
-                previewDiv.style.display = 'none';
-                return;
-            }
-
-            const dotIndex = filename.lastIndexOf('.');
-            if (dotIndex === -1) {
-                previewDiv.style.display = 'none';
-                return;
-            }
-
-            const ext = filename.slice(dotIndex + 1).toLowerCase();
-
-            if (iframeExtensions.includes(ext) || imgExtensions.includes(ext)) {
-                filenameLabel.textContent = filename;
-                previewContent.innerHTML = '';
-
-                if (iframeExtensions.includes(ext)) {
-                    previewDiv.style.width = '50vw';
-                    previewDiv.style.height = '70vh';
-                    previewDiv.style.top = '20px';
-                    previewDiv.style.left = '20px';
-
-                    const iframe = document.createElement('iframe');
-                    iframe.src = target.href;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    iframe.style.backgroundColor = 'white';
-                    previewContent.appendChild(iframe);
-
-                } else if (imgExtensions.includes(ext)) {
-                    const img = document.createElement('img');
-                    img.src = target.href;
-                    img.style.display = 'block';
+                const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+                const img = doc.querySelector('img');
+                if (img) {
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
                     img.style.objectFit = 'contain';
-                    img.style.maxWidth = '50vw';
-                    img.style.maxHeight = '80vh';
-
-                    img.onload = () => {
-                        const width = img.naturalWidth;
-                        const height = img.naturalHeight;
-
-                        const maxWidth = window.innerWidth * 0.5;
-                        const maxHeight = window.innerHeight * 0.8;
-                        const minWidth = window.innerWidth * 0.3;
-                        const minHeight = window.innerHeight * 0.3;
-
-                        const widthRatio = maxWidth / width;
-                        const heightRatio = maxHeight / height;
-                        const ratio = Math.min(widthRatio, heightRatio, 1);
-
-                        let displayWidth = width * ratio;
-                        let displayHeight = height * ratio;
-
-                        displayWidth = Math.max(displayWidth, minWidth);
-                        displayHeight = Math.max(displayHeight, minHeight);
-
-                        previewDiv.style.width = displayWidth + 'px';
-                        previewDiv.style.height = (displayHeight + 40) + 'px';
-                        previewDiv.style.top = '20px';
-                        previewDiv.style.left = '20px';
-                    };
-
-                    previewContent.appendChild(img);
+                    img.style.display = 'block';
+                    img.style.margin = 'auto';
                 }
-
-                previewDiv.style.display = 'block';
-
-            } else {
-                previewDiv.style.display = 'none';
+            } catch (e) {
+                // wyłapywanie błędów CORS'a
             }
+        };
+
+        previewFrame.src = href;
+        previewFrame.style.display = 'block';
+    };
+
+    window.hidePreview = function() {
+        previewFrame.style.display = 'none';
+        previewFrame.src = '';
+    };
+
+    function attachPreviewHandlers() {
+        const allLinks = document.querySelectorAll('.dropdown-menu a[href]');
+        allLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (link.dataset.previewBound) return;
+            if (!isSupportedFile(href)) return;
+
+            link.setAttribute('onmouseover', 'preview(event)');
+            link.setAttribute('onmouseout', 'hidePreview()');
+            link.dataset.previewBound = 'true';
         });
+    }
 
-        document.body.addEventListener('mouseout', function(event) {
-            const related = event.relatedTarget;
-            if (!related || !event.target.closest) return;
+    const observer = new MutationObserver(() => attachPreviewHandlers());
+    observer.observe(document.body, { childList: true, subtree: true });
 
-            const fromLink = event.target.closest('a[href]');
-            if (fromLink && fromLink.closest('.dropdown-menu')) {
-                if (!related.closest || !related.closest('.dropdown-menu')) {
-                    previewDiv.style.display = 'none';
-                    previewContent.innerHTML = '';
-                }
-            }
-        });
-    })();`;
+    attachPreviewHandlers();
 
-    const script = document.createElement('script');
-    script.textContent = code;
-    document.documentElement.appendChild(script);
+
 
 // Kontrola wersji alert ---------------------------------------------------------
-(async function() {
+    checkScriptVersions();
+
+function checkScriptVersions() {
     const scriptList = [
         { name: 'PHOTO_PREVIEW', url: 'https://raw.githubusercontent.com/sebastian-zborowski/fixably_-_photo-preview/main/%5BFIXABLY%5D%20-%20PHOTO_PREVIEW-0.8.user.js' },
     ];
@@ -200,41 +121,42 @@
         PHOTO_PREVIEW: '1.0',
     };
 
-    await Promise.all(scriptList.map(async script => {
-        try {
-            const res = await fetch(script.url);
-            const text = await res.text();
-            const match = text.match(/@version\s+([0-9.]+)/);
-            if (match) {
-                const version = match[1];
-                localStorage.setItem(script.name, JSON.stringify({
-                    name: script.name,
-                    remote: version
-                }));
-                console.log(`[VERSION CONTROL] ${script.name}: ${version}`);
-            } else {
-                console.warn(`[VERSION CONTROL] Nie znaleziono wersji dla: ${script.name}`);
-            }
-        } catch (err) {
-            console.warn(`[VERSION CONTROL] Błąd ładowania ${script.name}:`, err);
-        }
-    }));
+    Promise.all(scriptList.map(script => {
+        return fetch(script.url)
+            .then(res => res.text())
+            .then(text => {
+                const match = text.match(/@version\s+([0-9.]+)/);
+                if (match) {
+                    const version = match[1];
+                    localStorage.setItem(script.name, JSON.stringify({
+                        name: script.name,
+                        remote: version
+                    }));
+                    console.log(`[VERSION CONTROL] ${script.name}: ${version}`);
+                } else {
+                    console.warn(`[VERSION CONTROL] Nie znaleziono wersji dla: ${script.name}`);
+                }
+            })
+            .catch(err => {
+                console.warn(`[VERSION CONTROL] Błąd ładowania ${script.name}:`, err);
+            });
+    })).then(() => {
+        let popupCount = 0;
+        scriptList.forEach(script => {
+            const storedStr = localStorage.getItem(script.name);
+            if (!storedStr) return;
+            try {
+                const data = JSON.parse(storedStr);
+                const remoteVer = data?.remote;
+                const currentVer = currentVersions[script.name] || '0.0';
 
-    let popupCount = 0;
-    scriptList.forEach(script => {
-        const storedStr = localStorage.getItem(script.name);
-        if (!storedStr) return;
-        try {
-            const data = JSON.parse(storedStr);
-            const remoteVer = data?.remote;
-            const currentVer = currentVersions[script.name] || '0.0';
-
-            if (remoteVer && compareVersions(remoteVer, currentVer) > 0) {
-                showUpdatePopup(script.name, currentVer, remoteVer, popupCount++);
+                if (remoteVer && compareVersions(remoteVer, currentVer) > 0) {
+                    showUpdatePopup(script.name, currentVer, remoteVer, popupCount++);
+                }
+            } catch(e) {
+                console.warn(`[UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:`, e);
             }
-        } catch(e) {
-            console.warn(`[UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:`, e);
-        }
+        });
     });
 
     function compareVersions(v1, v2) {
@@ -254,23 +176,23 @@
         const popup = document.createElement('div');
         popup.textContent = `🔔 Aktualizacja dostępna dla ${scriptName}: ${remote} (masz ${current})`;
         Object.assign(popup.style, {
-        position: 'fixed',
-        bottom: `${20 + index * 100}px`, 
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: '#222',
-        color: '#fff',
-        padding: '24px 36px', 
-        borderRadius: '16px', 
-        fontSize: '18px', 
-        zIndex: 9999 + index,
-        boxShadow: '0 0 20px rgba(0,0,0,0.4)',
-        cursor: 'pointer',
-        userSelect: 'none',
-        transition: 'opacity 0.3s ease',
-        opacity: '1',
-        maxWidth: '90%',
-        textAlign: 'center',
+            position: 'fixed',
+            bottom: `${20 + index * 100}px`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#222',
+            color: '#fff',
+            padding: '24px 36px',
+            borderRadius: '16px',
+            fontSize: '18px',
+            zIndex: 9999 + index,
+            boxShadow: '0 0 20px rgba(0,0,0,0.4)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'opacity 0.3s ease',
+            opacity: '1',
+            maxWidth: '90%',
+            textAlign: 'center',
         });
 
         popup.addEventListener('click', () => popup.remove());
@@ -278,12 +200,11 @@
         document.body.appendChild(popup);
 
         setTimeout(() => {
-            // animacja znikania
             popup.style.opacity = '0';
             setTimeout(() => popup.remove(), 500);
         }, 7500);
     }
-})();
+}
 // ---------------------------------------------------------------------------------
 
 })();
