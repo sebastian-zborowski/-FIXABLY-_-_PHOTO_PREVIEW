@@ -129,12 +129,12 @@ function createPreviewFrame() {
                     name: script.name,
                     remote: version
                 }));
-                console.log([VERSION CONTROL] ${script.name}: ${version});
+                //console.log([VERSION CONTROL] ${script.name}: ${version});
             } else {
-                console.warn([VERSION CONTROL] Nie znaleziono wersji dla: ${script.name});
+                //console.warn([VERSION CONTROL] Nie znaleziono wersji dla: ${script.name});
             }
         } catch (err) {
-            console.warn([VERSION CONTROL] Błąd ładowania ${script.name}:, err);
+            //console.warn([VERSION CONTROL] Błąd ładowania ${script.name}:, err);
         }
     }));
 
@@ -151,7 +151,7 @@ function createPreviewFrame() {
                 showUpdatePopup(script.name, currentVer, remoteVer, popupCount++);
             }
         } catch(e) {
-            console.warn([UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:, e);
+            //console.warn([UPDATE CHECK] Błąd sprawdzania wersji dla ${script.name}:, e);
         }
     });
 
@@ -170,25 +170,25 @@ function createPreviewFrame() {
 
     function showUpdatePopup(scriptName, current, remote, index) {
         const popup = document.createElement('div');
-        popup.textContent = 🔔 Aktualizacja dostępna dla ${scriptName}: ${remote} (masz ${current});
+        popup.textContent = `🔔 Aktualizacja dostępna dla ${scriptName}: ${remote} (masz ${current})`;
         Object.assign(popup.style, {
-        position: 'fixed',
-        bottom: ${20 + index * 100}px,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: '#222',
-        color: '#fff',
-        padding: '24px 36px',
-        borderRadius: '16px',
-        fontSize: '18px',
-        zIndex: 9999 + index,
-        boxShadow: '0 0 20px rgba(0,0,0,0.4)',
-        cursor: 'pointer',
-        userSelect: 'none',
-        transition: 'opacity 0.3s ease',
-        opacity: '1',
-        maxWidth: '90%',
-        textAlign: 'center',
+            position: 'fixed',
+            bottom: `${20 + index * 100}px`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#222',
+            color: '#fff',
+            padding: '24px 36px',
+            borderRadius: '16px',
+            fontSize: '18px',
+            zIndex: 9999 + index,
+            boxShadow: '0 0 20px rgba(0,0,0,0.4)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'opacity 0.3s ease',
+            opacity: '1',
+            maxWidth: '90%',
+            textAlign: 'center',
         });
 
         popup.addEventListener('click', () => popup.remove());
@@ -205,5 +205,3 @@ function createPreviewFrame() {
 // ---------------------------------------------------------------------------------
 
 })();
-
-
